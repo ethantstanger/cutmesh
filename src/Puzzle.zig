@@ -1,30 +1,38 @@
+const std = @import("std");
+
 const Puzzle = @This();
-
-pub const End = enum {
-    // zig fmt: off
-    a, b, c, d, e, f, g, h, i, j, k, l, m, n, o, p, q, r, s, t, u, v, w, x, y, z, 
-    // zig fmt: on
-
-    pub fn toEndFlags(self: End) u32 {
-        return @as(u32, 1) << @intFromEnum(self);
-    }
-};
 
 col_hints: []const ?u8,
 row_hints: []const ?u8,
-nodes: []const ?End,
+end_pairs: []const [2]struct { x: u8, y: u8 },
 
-const ValidityError = error{ NodesInvalidLen, UnpairedEnds };
+const ValidityError = error{ EndOutOfBounds, OverlappingEnds, InvalidColHint, InvalidRowHint };
 
 pub fn validate(self: *const Puzzle) ValidityError!void {
-    if (self.nodes.len != self.colCount() * self.rowCount()) return ValidityError.NodesInvalidLen;
-
-    var cell_hint_counts: [26]u8 = .{0} ** 26;
-    for (self.nodes) |it| {
-        if (it) |end| cell_hint_counts[@intFromEnum(end)] += 1;
+    for (self.col_hints) |it| {
+        const hint = it orelse continue;
+        if (hint > self.row_hints.len) return ValidityError.InvalidColHint;
     }
-    for (cell_hint_counts) |it| {
-        if (it != 2 and it != 0) return ValidityError.UnpairedEnds;
+
+    for (self.row_hints) |it| {
+        const hint = it orelse continue;
+        if (hint > self.col_hints.len) return ValidityError.InvalidRowHint;
+    }
+
+    const eql = std.meta.eql;
+    for (self.end_pairs) |a| {
+        if (eql(a[0], a[1])) return ValidityError.OverlappingEnds;
+
+        for (a) |it| {
+            if (it.x > self.col_hints.len) return ValidityError.EndOutOfBounds;
+            if (it.y > self.row_hints.len) return ValidityError.EndOutOfBounds;
+        }
+
+        for (self.end_pairs) |b| {
+            if (eql(a, b)) continue;
+            if (eql(a[0], b[0]) or eql(a[0], b[1])) return ValidityError.OverlappingEnds;
+            if (eql(a[1], b[0]) or eql(a[1], b[1])) return ValidityError.OverlappingEnds;
+        }
     }
 }
 
