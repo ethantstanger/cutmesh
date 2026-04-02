@@ -156,7 +156,7 @@ fn collapseAdjacentDisparateEnds(self: *Solver) void {
         if (a.getE(self)) |b| inner: {
             if (a.end_flags & b.end_flags != 0) break :inner;
             a.seg_flags &= ~Node.seg_mask.full_e;
-            b.seg_flags &= ~Node.seg_mask.full_s;
+            b.seg_flags &= ~Node.seg_mask.full_w;
         }
 
         if (a.getSE(self)) |b| inner: {
@@ -169,6 +169,12 @@ fn collapseAdjacentDisparateEnds(self: *Solver) void {
             if (a.end_flags & b.end_flags != 0) break :inner;
             a.seg_flags &= ~Node.seg_mask.full_s;
             b.seg_flags &= ~Node.seg_mask.full_n;
+        }
+
+        if (a.getSW(self)) |b| inner: {
+            if (a.end_flags & b.end_flags != 0) break :inner;
+            a.seg_flags &= ~Node.seg_mask.full_sw;
+            b.seg_flags &= ~Node.seg_mask.full_ne;
         }
     }
 }
