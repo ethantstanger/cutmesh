@@ -49,6 +49,8 @@ const Node = struct {
         const full_nw = nw | nw_n | nw_ne | nw_e | s_nw | sw_nw | w_nw;
 
         const full = full_n | full_ne | full_e | full_se | full_s | full_sw | full_w | full_nw;
+        const full_end = n | ne | e | se | s | sw | w | nw;
+        const full_path = full & ~full_end;
         // zig fmt: on
     };
 
@@ -125,7 +127,8 @@ pub fn from(a: std.mem.Allocator, puzzle: *const Puzzle) !Solver {
     try puzzle.validate();
 
     const nodes = try a.alloc(Node, puzzle.size() * puzzle.size());
-    @memset(nodes, .{ .seg_flags = Node.seg_mask.full, .end_flags = (@as(u32, 1) << @intCast(puzzle.end_pairs.len)) - 1 });
+    const end_flags = (@as(u32, 1) << @intCast(puzzle.end_pairs.len)) - 1;
+    @memset(nodes, .{ .seg_flags = Node.seg_mask.full_path, .end_flags = end_flags });
 
     var solver = Solver{ .puzzle = puzzle, .nodes = nodes };
     for (puzzle.end_pairs, 0..) |pair, i| {
@@ -223,26 +226,26 @@ pub fn printGrid(self: *const Solver) void {
 
         for (0..self.puzzle.size()) |col| {
             const n = self.node(col, row);
-            const str1 = if (n.seg_flags & Node.seg_mask.nw != 0) "\u{2572}" else " ";
-            const str2 = if (n.seg_flags & Node.seg_mask.n != 0) "\u{2502}" else " ";
-            const str3 = if (n.seg_flags & Node.seg_mask.ne != 0) "\u{2571}" else " ";
+            const str1 = if (n.seg_flags & Node.seg_mask.full_nw != 0) "\u{2572}" else " ";
+            const str2 = if (n.seg_flags & Node.seg_mask.full_n != 0) "\u{2502}" else " ";
+            const str3 = if (n.seg_flags & Node.seg_mask.full_ne != 0) "\u{2571}" else " ";
             print("{s}{s}{s}", .{ str1, str2, str3 });
         }
         print("\n   \u{2502}", .{});
         for (0..self.puzzle.size()) |col| {
             const n = self.node(col, row);
-            const str1 = if (n.seg_flags & Node.seg_mask.w != 0) "\u{2500}" else " ";
+            const str1 = if (n.seg_flags & Node.seg_mask.full_w != 0) "\u{2500}" else " ";
             const collapsed = n.end_flags != 0 and (n.end_flags & (n.end_flags - 1) == 0);
             const str2 = if (collapsed) &.{'A' + @as(u8, @ctz(n.end_flags))} else "\u{2022}";
-            const str3 = if (n.seg_flags & Node.seg_mask.e != 0) "\u{2500}" else " ";
+            const str3 = if (n.seg_flags & Node.seg_mask.full_e != 0) "\u{2500}" else " ";
             print("{s}{s}{s}", .{ str1, str2, str3 });
         }
         print("\n   \u{2502}", .{});
         for (0..self.puzzle.size()) |col| {
             const n = self.node(col, row);
-            const str1 = if (n.seg_flags & Node.seg_mask.sw != 0) "\u{2571}" else " ";
-            const str2 = if (n.seg_flags & Node.seg_mask.s != 0) "\u{2502}" else " ";
-            const str3 = if (n.seg_flags & Node.seg_mask.se != 0) "\u{2572}" else " ";
+            const str1 = if (n.seg_flags & Node.seg_mask.full_sw != 0) "\u{2571}" else " ";
+            const str2 = if (n.seg_flags & Node.seg_mask.full_s != 0) "\u{2502}" else " ";
+            const str3 = if (n.seg_flags & Node.seg_mask.full_se != 0) "\u{2572}" else " ";
             print("{s}{s}{s}", .{ str1, str2, str3 });
         }
         print("\n", .{});
