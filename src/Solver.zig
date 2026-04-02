@@ -121,6 +121,27 @@ const Node = struct {
         if (self.onSideW(solver) or self.onSideN(solver)) return null;
         return &solver.nodes[self.index(solver) - solver.puzzle.size() - 1];
     }
+
+    fn areEndFlagsCollapsed(self: *const Node) bool {
+        return self.end_flags != 0 and (self.end_flags & (self.end_flags - 1) == 0);
+    }
+
+    fn getEndPrintChar(self: *const Node) ?u8 {
+        if (!self.areEndFlagsCollapsed()) return null;
+        return 'A' + @as(u8, @ctz(self.end_flags));
+    }
+
+    fn getPrintColor(self: *const Node) *const [7:0]u8 {
+        if (!self.areEndFlagsCollapsed()) return "\x1b[0;37m";
+        return switch (@as(u8, @ctz(self.end_flags)) % 6) {
+            0 => "\x1b[0;31m",
+            1 => "\x1b[0;32m",
+            2 => "\x1b[0;33m",
+            3 => "\x1b[0;34m",
+            4 => "\x1b[0;35m",
+            else => "\x1b[0;37m",
+        };
+    }
 };
 
 const Cell = struct {
@@ -330,27 +351,29 @@ pub fn printGrid(self: *const Solver) void {
 
         for (0..self.puzzle.size()) |x| {
             const n = self.node(x, y);
+            const c = n.getPrintColor();
             const str1 = if (n.seg_flags & seg_mask.full_nw != 0) "\u{2572}" else " ";
             const str2 = if (n.seg_flags & seg_mask.full_n != 0) "\u{2502}" else " ";
             const str3 = if (n.seg_flags & seg_mask.full_ne != 0) "\u{2571}" else " ";
-            print("{s}{s}{s}", .{ str1, str2, str3 });
+            print("{s}{s}{s}{s}\x1b[0m", .{ c, str1, str2, str3 });
         }
         print("\n   \u{2502}", .{});
         for (0..self.puzzle.size()) |x| {
             const n = self.node(x, y);
+            const c = n.getPrintColor();
             const str1 = if (n.seg_flags & seg_mask.full_w != 0) "\u{2500}" else " ";
-            const collapsed = n.end_flags != 0 and (n.end_flags & (n.end_flags - 1) == 0);
-            const str2 = if (collapsed) &.{'A' + @as(u8, @ctz(n.end_flags))} else "\u{2022}";
+            const str2 = if (n.getEndPrintChar()) |it| &.{it} else "\u{2022}";
             const str3 = if (n.seg_flags & seg_mask.full_e != 0) "\u{2500}" else " ";
-            print("{s}{s}{s}", .{ str1, str2, str3 });
+            print("{s}{s}{s}{s}\x1b[0m", .{ c, str1, str2, str3 });
         }
         print("\n   \u{2502}", .{});
         for (0..self.puzzle.size()) |x| {
             const n = self.node(x, y);
+            const c = n.getPrintColor();
             const str1 = if (n.seg_flags & seg_mask.full_sw != 0) "\u{2571}" else " ";
             const str2 = if (n.seg_flags & seg_mask.full_s != 0) "\u{2502}" else " ";
             const str3 = if (n.seg_flags & seg_mask.full_se != 0) "\u{2572}" else " ";
-            print("{s}{s}{s}", .{ str1, str2, str3 });
+            print("{s}{s}{s}{s}\x1b[0m", .{ c, str1, str2, str3 });
         }
         print("\n", .{});
     }
