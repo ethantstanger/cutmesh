@@ -8,8 +8,12 @@ pub fn main() !void {
     const a = arena.allocator();
 
     const puzzle = Puzzle{
-        .col_hints = &.{ 1, 3, 4, 3 },
-        .row_hints = &.{ 1, 3, 2, 1 },
+        .cut_hints = &.{
+            .{ .col = 1, .row = 1 },
+            .{ .col = 3, .row = 3 },
+            .{ .col = 4, .row = 2 },
+            .{ .col = 3, .row = 1 },
+        },
         .end_pairs = &.{
             .{ .{ .x = 1, .y = 0 }, .{ .x = 4, .y = 2 } },
             .{ .{ .x = 1, .y = 2 }, .{ .x = 3, .y = 4 } },
