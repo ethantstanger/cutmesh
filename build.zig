@@ -10,7 +10,7 @@ pub fn build(b: *std.Build) void {
         .optimize = optimize,
     });
 
-    const exe = b.addExecutable(.{ .name = "netmesh", .root_module = main_mod });
+    const exe = b.addExecutable(.{ .name = "cutmesh", .root_module = main_mod });
     b.installArtifact(exe);
 
     const run_step = b.step("run", "Run the executable");
